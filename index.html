@@ -200,15 +200,30 @@
             return data.candidates[0].content.parts[0].text;
         }
 
-        async function callGeminiProxyTTS(model, text) {
-            const res = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model,
-                    contents: [{ parts: [{ text }] }],
-                    generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: document.getElementById('voice-select').value } } } }
-                })
+        async function callGeminiProxy(model, text) {
+    try {
+        const res = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, contents: [{ parts: [{ text }] }] })
+        });
+        
+        const data = await res.json();
+
+        // Verificamos si la respuesta de Google tiene lo que esperamos
+        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+            return data.candidates[0].content.parts[0].text;
+        } else {
+            // Si no tiene la estructura, mostramos el error real de Google
+            const errorMsg = data.error ? data.error.message : "Estructura de respuesta inválida";
+            logDebug("Error de la IA: " + errorMsg);
+            throw new Error(errorMsg);
+        }
+    } catch (e) {
+        logDebug("Error en Proxy: " + e.message);
+        throw e;
+    }
+}
             });
             const data = await res.json();
             const b64 = data.candidates[0].content.parts[0].inlineData.data;
