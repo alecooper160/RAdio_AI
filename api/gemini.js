@@ -1,5 +1,10 @@
 export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    return res.status(500).json({ error: "Falta la API Key en Vercel" });
+  }
+
   const { model, contents, generationConfig } = req.body;
 
   try {
@@ -10,14 +15,8 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-
-    // Si Google nos da un error, lo mandamos a la consola para saber qué es
-    if (data.error) {
-      return res.status(500).json({ error: data.error.message });
-    }
-
     res.status(200).json(data);
   } catch (error) {
-    res.status(500).json({ error: "Error de conexión con el servidor" });
+    res.status(500).json({ error: "Error de comunicación" });
   }
 }
